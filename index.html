@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="./favicon.ico" />
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JustilLi.</title>
+    <style>
+        *{padding:0;margin:0;list-style:none}
+        #header{
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: bold;
+            background: url('./home.jpg') no-repeat center center;
+            background-size: cover;
+            color: #fff;
+        }
+        #footer{
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7rem;
+            font-weight: bold;
+        }
+        .playground{
+            height: 300vh;
+            background-color: black;
+            position: relative;
+        }
+        .animation-container{
+            display: flex;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+        .list{
+            width: 800px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%,-50%);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .list-item{
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            background-color: #fff;
+            margin: 50px 15px;
+        }
+        .list-item:nth-child(2n - 1){
+            background-color: skyblue;
+        }
+        .list-item:nth-child(2n){
+            background-color: rgb(111, 245, 111);
+        }
+        .list-item:nth-child(3n){
+            background-color: orange;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">Welcome to Our Blog</div>
+    <div class="playground">
+        <div class="animation-container">
+            <div class="list">
+                <div data-order="0" class="list-item"></div>
+                <div data-order="1" class="list-item"></div>
+                <div data-order="2" class="list-item"></div>
+                <div data-order="3" class="list-item"></div>
+                <div data-order="2" class="list-item"></div>
+                <div data-order="1" class="list-item"></div>
+                <div data-order="0" class="list-item"></div>
+                <div data-order="0" class="list-item"></div>
+                <div data-order="1" class="list-item"></div>
+                <div data-order="2" class="list-item"></div>
+                <div data-order="3" class="list-item"></div>
+                <div data-order="2" class="list-item"></div>
+                <div data-order="1" class="list-item"></div>
+                <div data-order="0" class="list-item"></div>
+         
+            </div>
+        </div> 
+    </div>
+    <div id="footer">TODO</div>
+</body>
+</html>
+<script>
+    // 获取元素
+    const items = document.querySelectorAll('.list-item')
+    const playGround = document.querySelector('.playground')
+    const list = document.querySelector('.list');
+
+    // 得出动画节点数值
+    function createAnimation(scrollStart,scrollEnd,valueStart,valueEnd) {
+        return function(scroll){
+            if(scroll <= scrollStart){
+                return valueStart
+            }
+
+            if(scroll >= scrollEnd){
+                return valueEnd
+            }
+
+            return valueStart + (valueEnd - valueStart) * (scroll - scrollStart) / (scrollEnd - scrollStart)
+        }
+    }
+
+
+    const animataionMap = new Map();
+
+    function getDomAnimation(scrollStart,scrollEnd,dom){
+        scrollStart = scrollStart + dom.dataset.order * 300
+        const opacityAnimation = createAnimation(scrollStart,scrollEnd,0,1)
+        // 基于当前滚动计算得出的透明度
+        const opacity = function(scroll){
+            return opacityAnimation(scroll);
+        }
+
+        const scaleAnimation = createAnimation(scrollStart,scrollEnd,.3,1)
+
+        const xAnimation = createAnimation(scrollStart,scrollEnd,list.clientWidth / 2 - dom.offsetLeft - dom.clientWidth / 2,0)
+        const yAnimation = createAnimation(scrollStart,scrollEnd,list.clientHeight / 2 - dom.offsetTop - dom.clientHeight / 2,0)
+
+        const transform = function(scroll){
+            return `translate(${xAnimation(scroll)}px,${yAnimation(scroll)}px)  scale(${scaleAnimation(scroll)})`
+        }
+
+        return {
+            opacity,
+            transform 
+        }
+    }
+    
+    function updateMap(){
+        animataionMap.clear();
+        const playGroundRect = playGround.getBoundingClientRect();
+        // 开始动画的距离
+        const scrollStart = playGroundRect.top + window.scrollY
+        // 结束动画的距离  相当于playground的高度
+        const scrollEnd = playGroundRect.bottom + window.scrollY - window.innerHeight
+        for(const item of items){
+            animataionMap.set(item,getDomAnimation(scrollStart,scrollEnd,item))
+        }
+    }
+    updateMap()
+
+    function updateStyle(){
+        const scroll = window.scrollY;
+        for(let [dom,value] of animataionMap){
+            for(const cssProp in value){
+                dom.style[cssProp] = value[cssProp](scroll);
+            }
+        }
+    }
+
+    updateStyle();
+
+    window.addEventListener('scroll',updateStyle)
+
+</script>
+
